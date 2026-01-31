@@ -8,13 +8,13 @@ from unicorn import Uc, UcError, UC_ARCH_ARM, UC_MODE_THUMB, UC_HOOK_CODE
 from unicorn.arm_const import *
 
 # =============================================================================
-# STM32F4 memory map
+# STM32F425 memory map
 # =============================================================================
 FLASH_BASE = 0x08000000
-FLASH_SIZE = 0x00200000   # large mapping to avoid unmapped reads
+FLASH_SIZE = 0x00200000   
 
 SRAM_BASE  = 0x20000000
-SRAM_SIZE  = 0x00020000   # 128KB
+SRAM_SIZE  = 0x00020000   
 
 PERIPH_BASE = 0x40000000
 PERIPH_SIZE = 0x01000000
@@ -39,9 +39,6 @@ CMD_DUMP_HEAP   = 0xAA
 CMD_DUMP_REGS   = 0xBB
 CMD_CRASH       = 0xCC
 
-# =============================================================================
-# Helpers
-# =============================================================================
 def tlv(t, payload=b"", length=None):
     if length is None:
         length = len(payload)
@@ -99,7 +96,7 @@ def build_uc(fw_path: str):
 
     # stop pad: infinite branch at EXIT_ADDR
     EXIT_ADDR = SRAM_BASE + SRAM_SIZE - 0x100
-    uc.mem_write(EXIT_ADDR, b"\xfe\xe7")  # Thumb: b .
+    uc.mem_write(EXIT_ADDR, b"\xfe\xe7") 
 
     return uc, fw, EXIT_ADDR
 
@@ -127,9 +124,9 @@ def install_hooks(uc, EXIT_ADDR):
 
     return messages
 
-# =============================================================================
-# Resolve globals from firmware constants (like your v2.py)
-# =============================================================================
+
+
+
 def resolve_globals(uc):
     # From decompiled code: DAT_08000b8c, DAT_08000b68, DAT_08000b6c
     string_buffer = read_u32(uc, 0x08000b8c)
@@ -144,9 +141,9 @@ def resolve_globals(uc):
 
     return string_buffer, heap_size_var, heap_ptr_var, token_value_var, token_ready_var
 
-# =============================================================================
-# TLV runner
-# =============================================================================
+
+
+
 def run_one(uc, EXIT_ADDR, BUF_ADDR, cmd, payload=b"", length=None, count=200000):
     pkt = tlv(cmd, payload, length=length)
     uc.mem_write(BUF_ADDR, pkt)
@@ -161,9 +158,7 @@ def run_one(uc, EXIT_ADDR, BUF_ADDR, cmd, payload=b"", length=None, count=200000
         pc = uc.reg_read(UC_ARM_REG_PC)
         return False, e, pc
 
-# =============================================================================
-# Step 4: extraction / token automation / debug dumps
-# =============================================================================
+
 def extract_secrets_from_firmware(fw: bytes):
     strings = extract_ascii_runs(fw, min_len=4)
 
